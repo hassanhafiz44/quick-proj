@@ -1,0 +1,1 @@
+docker exec flask-app /bin/sh -c "python -m unittest unit_tests"
