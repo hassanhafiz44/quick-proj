@@ -45,12 +45,15 @@ class BlogSearchTestCase(unittest.TestCase):
         conn.commit()
 
     # note: vague testing as what is returned is direct HTML
-    
     def test_search_by_username(self):
         response = self.client.get('/?q=alice')
         self.assertIn(b"Hello from Alice", response.data)
         self.assertIn(b"username:", response.data) # vaguely contains
 
+    def test_search_by_username_fuzzy(self):
+        response = self.client.get('/?q=lica')
+        self.assertIn(b"Hello from Alice", response.data)
+        self.assertIn(b"username:", response.data) # vaguely contains
 
     def test_search_by_title(self):
         response = self.client.get('/?q=Guide')
@@ -58,9 +61,20 @@ class BlogSearchTestCase(unittest.TestCase):
         self.assertIn(b"title:", response.data) # vaguely contains
         self.assertNotIn(b"body:", response.data) # vaguely not contains
 
+    def test_search_by_title_fuzzy(self):
+        response = self.client.get('/?q=Huide')
+        self.assertIn(b"The Guide", response.data)
+        self.assertIn(b"title:", response.data) # vaguely contains
+        self.assertNotIn(b"body:", response.data) # vaguely not contains
 
     def test_search_by_body(self):
         response = self.client.get('/?q=deployment')
+        self.assertIn(b"The Guide", response.data)
+        self.assertIn(b"body:", response.data) # vaguely contains
+        self.assertNotIn(b"title:", response.data) # vaguely not contains
+
+    def test_search_by_body(self):
+        response = self.client.get('/?q=deploymeant')
         self.assertIn(b"The Guide", response.data)
         self.assertIn(b"body:", response.data) # vaguely contains
         self.assertNotIn(b"title:", response.data) # vaguely not contains
