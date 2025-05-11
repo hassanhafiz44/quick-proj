@@ -33,23 +33,23 @@ def index():
         posts_username = db.execute(
             "SELECT p.id, title, body, created, author_id, username"
             " FROM post p JOIN user u ON p.author_id = u.id"
-            " WHERE u.username LIKE ?"
+            " WHERE fuzzy_in_text(u.username, ?) <= 2"
             " ORDER BY created DESC",
-            (f'%{query}%',)
+            (query,)
         ).fetchall()
         posts_title = db.execute(
             "SELECT p.id, title, body, created, author_id, username"
             " FROM post p JOIN user u ON p.author_id = u.id"
-            " WHERE p.title LIKE ?"
+            " WHERE fuzzy_in_text(p.title, ?) <= 2"
             " ORDER BY created DESC",
-            (f'%{query}%',)
+            (query,)
         ).fetchall()
         posts_body = db.execute(
             "SELECT p.id, title, body, created, author_id, username"
             " FROM post p JOIN user u ON p.author_id = u.id"
-            " WHERE p.body LIKE ?"
+            " WHERE fuzzy_in_text(p.body, ?) <= 2"
             " ORDER BY created DESC",
-            (f'%{query}%',)
+            (query,)
         ).fetchall()
     else:
         posts = db.execute(

@@ -5,6 +5,48 @@ from flask import current_app
 from flask import g
 from flask.cli import with_appcontext
 
+def levenshtein(s1, s2):
+    if not s1 or not s2:
+        return max(len(s1), len(s2))
+
+    if len(s1) < len(s2):
+        return levenshtein(s2, s1)
+
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+
+    return previous_row[-1]
+
+def fuzzy_in_text(query, text):
+    """
+    Returns the minimum Levenshtein distance between `query` and any substring of `text`
+    of the same length as `query`. Automatically swaps if query is longer than text.
+    """
+    query = query.lower()
+    text = text.lower()
+
+    # Always search for the shorter inside the longer
+    if len(query) > len(text):
+        query, text = text, query
+
+    qlen = len(query)
+    tlen = len(text)
+
+    min_dist = float('inf')
+    for i in range(tlen - qlen + 1):
+        window = text[i:i+qlen]
+        dist = levenshtein(query, window)
+        if dist < min_dist:
+            min_dist = dist
+    return min_dist
+
 
 def get_db():
     """Connect to the application's configured database. The connection
@@ -15,6 +57,7 @@ def get_db():
         g.db = sqlite3.connect(
             current_app.config["DATABASE"], detect_types=sqlite3.PARSE_DECLTYPES
         )
+        g.db.create_function("fuzzy_in_text", 2, fuzzy_in_text)
         g.db.row_factory = sqlite3.Row
 
     return g.db
